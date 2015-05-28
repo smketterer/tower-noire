@@ -3,17 +3,15 @@ version 4
 __lua__
 
 function _init()
-	--init game variables
 	gm = {}
 	gm.wait = false
-	gm.input_wait = false
 	gm.log = {"welcome to tower noire.", "sorry in advance."}
-	gm.e = {{0,"slime",32,32,64},{0,"rat",33,40,80},{0,"pushblock",34,72,64}}
+	gm.e = {{0,"slime",32,32,64},{0,"rat",33,40,80},{0,"block",34,72,64},{0,"fire",31,8,8},{0,"rat",33,48,80}}
 	gm.crs = ">"
+	gm.showmenu = false
 	gm.prompted = false
 	pal(6,0)
-
-	--init player variables and functions
+	
 	p = {}
 	p.can = true
 	p.hp = 16
@@ -23,46 +21,45 @@ function _init()
 	p.steps = 0
 	p.sprites = {0}
 	p.image = 0
-	p.inv = {{"hand",""},{"body","tunic"},{"legs",""},{"pock1",""},{"pock2",""},{"pock3",""}}
+	p.inv = {{"hand","",45},{"body","tunic",44},{"legs","",46},{"pocket1","",62},{"pocket2","",62},{"pocket3","",62}}
 	p.act = {{gm.crs,"wear"},{"","throw"},{"","dip"},{"","eat"},{"","drop"},{"","exit"}}
 	
 	function gm.mapdraw()
 		mapdraw(0,0,0,0,16,16) --the test map
-		spr(31+((p.steps % 2)*16), 8, 8) --the bloodfiresoul
-		--spr(32+((p.steps % 2)*16), 32, 64) --the slime
-		--spr(33+((p.steps % 2)*16), 40, 80) --the rat
 	end
 	
 	function gm.draw()
-		--draw log
 		print(gm.log[count(gm.log)-1],4,115,1)
 		print(gm.log[count(gm.log)-1],4,114,5)
 		print(gm.log[count(gm.log)],4,123,1)
 		print(gm.log[count(gm.log)],4,122,13)
-		--draw side hud
 		spr(63,98,0)
 		print(p.hp .. "/" .. p.maxhp,108,1,7)
-		spr(45,98,8)
-		if p.inv[1][2] == "" then print("none",108,9,1) else print(p.inv[1][2],108,9,13) end
-		spr(44,98,16)
-		if p.inv[2][2] == "" then print("none",108,17,1) else print(p.inv[2][2],108,17,13) end
-		spr(46,98,24)
-		if p.inv[3][2] == "" then print("none",108,25,1) else print(p.inv[3][2],108,25,13) end
-		
+		for i=1,6 do
+			spr(p.inv[i][3],98,(i*8))
+			if p.inv[i][2] == "" then print("none",108,1+(i*8),1) else print(p.inv[i][2],108,1+(i*8),13) end
+		end
 		gm.edraw()
 		
+		if gm.showmenu == true then
+			gm.menu()
+		end
 		if gm.prompted == true then
 			gm.prompt()
 		end
+		
+		if btnp(4) then
+			gm.showmenu = true
+			--gm.prompted = true
+		end
+	end
+	
+	function gm.sleep(seconds)
+		for i=1,seconds*30 do flip() end
 	end
 	
 	function gm.debugdraw()
-		if btn(0) then rectfill(108,108,112,112,7) else rect(108,108,112,112,5) end
-		if btn(1) then rectfill(120,108,124,112,7) else rect(120,108,124,112,5) end
-		if btn(2) then rectfill(114,102,118,106,7) else rect(114,102,118,106,5) end
-		if btn(3) then rectfill(114,108,118,112,7) else rect(114,108,118,112,5) end
-		if btn(4) then rectfill(108,114,112,118,7) else rect(108,114,112,118,5) end
-		if btn(5) then rectfill(114,114,118,118,7) else rect(114,114,118,118,5) end
+		--hi
 	end
 	
 	function gm.edraw()
@@ -103,7 +100,7 @@ function _init()
 					end
 				end
 			end
-			if ent[2] == "pushblock" then
+			if ent[2] == "block" or ent[2] == "fire" then
 				etox = 0
 				etoy = 0
 			end
@@ -119,8 +116,26 @@ function _init()
 		--go to next room
 	end
 	
+	function gm.menu()
+		if menu_selection == nil then
+			menu_selection = 0
+		end
+		if btnp(2) then
+			if menu_selection == 0 then menu_selection = 5 else menu_selection -= 1 end
+		end
+		if btnp(3) then
+			if menu_selection == 5 then menu_selection = 0 else menu_selection += 1 end
+		end
+		if btnp(4) then
+			gm.showmenu = false
+			gm.prompted = true
+		end
+		if btnp(5) then
+		end
+		rect(98,7+(8*menu_selection),127,15+(8*menu_selection),7)
+	end
+	
 	function gm.prompt()
-		p.can = false
 		rect(16,32,111,79,13)
 		rectfill(17,33,110,78,0)
 		line(16,80,111,80,1)
@@ -164,10 +179,8 @@ function _init()
 		if btnp(4) then
 			for i=1,6 do
 				if p.act[i][1] == gm.crs then
-					if i==6 then
+					if i == 6 then
 						gm.prompted = false
-						p.can = true
-						flip()
 					end
 					--fill in the rest of the behaviours here
 				end
@@ -181,11 +194,9 @@ function _init()
 	end
 	
 	function p.step(x,y,img)
-		--bump enemies and such
 		for ent in all(gm.e) do
 			if ent[4] == p.x+x and ent[5] == p.y+y then
-				if ent[2] == "pushblock" then
-					--move the block and return
+				if ent[2] == "block" then
 					to = mget((p.x+(x*2))/8,(p.y+(y*2))/8)
 					if to != 60 and to != 61 and to != 65 then
 						ent[4] = p.x+(x*2)
@@ -195,13 +206,19 @@ function _init()
 						add(gm.log,"you move the "..ent[2])
 					end
 				end
+				if ent[2] == "slime" then
+					add(gm.log,"you hit the "..ent[2])
+				end
+				if ent[2] == "rat" then
+					add(gm.log,"you hit the "..ent[2])
+				end
 				p.steps += 1
 				p.image = img+(p.steps%2)
 				sfx(0)
 				return true
 			end
 		end
-		--else move if you're free
+		
 		to = mget((p.x+x)/8,(p.y+y)/8)
 		if to != 60 and to != 61 and to != 65 then
 			p.x += x
@@ -218,6 +235,7 @@ function _init()
 	end
 	
 	function p.move()
+		if gm.showmenu == true or gm.prompted == true then p.can = false else p.can = true end
 		if p.can == true then
 			if btnp(0) then
 				p.step(-8,0,0)
@@ -230,10 +248,6 @@ function _init()
 			end
 			if btnp(3) then
 				p.step(0,8,6)
-			end
-			if btnp(4) then
-				gm.prompted = true
-				flip()
 			end
 			if btnp(5) then
 				p.step(0,0)
@@ -307,6 +321,8 @@ end
 
 
 
+
+
 __gfx__
 064446000644460000644460006444600644460000644460064446000064446000000000e222222e000001101100111001001000010010000000000000000000
 6464446064644460064446460644464606444460064444600644646006464460000000000e2222e0001055511110551011010100000000000400004000666066
@@ -325,12 +341,12 @@ f6ccc6f006c6f6600f6ccc6f066f6c60f6cccc6ff6cccc6ff6cccc6ff6cccc6f0000000000eee700
 6f6c66c606cccc606661616000060000000000000000000000000000000000000000000000005001111110111005500000000300131033011310b3011d2002e1
 0686c66006c666000066066000000000000000000000000000000000000000000000000001000011100001001105500100030000100530131005303301deee10
 0006600006460000e222222e0000000000000000000000000000000000000000000000001110511000000000115d000000000000000004f00000000000080000
-006bb600646666006e2222e60000000000000000000000000000000000000000000000000110111000000000015000000049994000044f400024440000098000
-06bbb3606455116066eeee6600000000000000000000000000000000000000000000000000000101000000000111055004900094004f4f0000222200008a9800
-63bbb6366555564666eeee6600000000000000000000000000000000000000000000000000dd0110000000000111d5500999999900ffff00002442000d9aa8d0
-63b633366156455666eeee66000000000000000000000000000000000000000000000000055d1110000000000110dd000949994900fff44f00244220d208982d
-633333361656155666eee7660000000000000000000000000000000000000000000000000550111000000000101000000449994400fffff400244442d202202d
-63333336606565266266662600000000000000000000000000000000000000000000000000000510000000000111011000499940000fff40005ffff51e2002d1
+006bb600646666006e2222e6000000000000000000000000000000000000000000000000011011100000000001500000002eee2000044f400024440000098000
+06bbb3606455116066eeee6600000000000000000000000000000000000000000000000000000101000000000111055002e000e2004f4f0000222200008a9800
+63bbb6366555564666eeee6600000000000000000000000000000000000000000000000000dd0110000000000111d5500eeeeeee00ffff00002442000d9aa8d0
+63b633366156455666eeee66000000000000000000000000000000000000000000000000055d1110000000000110dd000e2eee2e00fff44f00244220d208982d
+633333361656155666eee766000000000000000000000000000000000000000000000000055011100000000010100000022eee2200fffff400242442d202202d
+633333366065652662666626000000000000000000000000000000000000000000000000000005100000000001110110002eee20000fff40005ffff51e2002d1
 0633336000066660266666620000000000000000000000000000000000000000000000000000d511000000000115011100000000000000000000000001eede10
 0000000000642600e222222e00000000000000000000000000000000000000000000000010055011001000011100001021111112511111150ddddddd00000000
 00000000064666006e2222e600000000000000000000000000000000000000000000000000055001110111111005000002111120051111500d00000d00880880
@@ -339,7 +355,7 @@ f6ccc6f006c6f6600f6ccc6f066f6c60f6cccc6ff6cccc6ff6cccc6ff6cccc6f0000000000eee700
 3bbbb6336555564666eeee6600000000000000000000000000000000000000000000000011001000000dd0005500011000222200005ddd000d11111d00888880
 3bb633330656455666eee76600000000000000000000000000000000000000000000000000015100110d5500005100000022220000dddc000d11111d00088800
 33333333065615566266662600000000000000000000000000000000000000000000000000011101110055000011100001000010010000100ddddddd00008000
-63333336061665262666666200000000000000000000000000000000000000000000000000001100100000001001100010000001100000010111111100000000
+63333336061665262666666200000000000000000000000000000000000000000000000000001100100000001001100010000001100000010000000000000000
 00000000000000100000000000000000111111201101111000000000000000000000000000000000000000000000000000000000000000000000000000000000
 02221110000001010000011008882221011112121110122000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00011111100010110000012000022222201121220111028000000000000000000000000000000000000000000000000000000000000000000000000000000000
