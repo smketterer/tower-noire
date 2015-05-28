@@ -4,13 +4,11 @@ __lua__
 
 function _init()
 	gm = {}
-	gm.wait = false
-	gm.log = {"welcome to tower noire.", "sorry in advance."}
-	gm.e = {{0,"slime",32,32,64},{0,"rat",33,40,80},{0,"block",34,72,64},{0,"fire",31,8,8},{0,"rat",33,48,80}}
+	gm.log = {"","welcome to tower noire."}
+	gm.e = {{0,"slime",32,32,64},{0,"block",34,72,64},{0,"fire",31,8,8},{0,"rat",33,48,80}}
 	gm.crs = ">"
 	gm.showmenu = false
 	gm.prompted = false
-	pal(6,0)
 	
 	p = {}
 	p.can = true
@@ -24,8 +22,10 @@ function _init()
 	p.inv = {{"hand","",45},{"body","tunic",44},{"legs","",46},{"pocket1","",62},{"pocket2","",62},{"pocket3","",62}}
 	p.act = {{gm.crs,"wear"},{"","throw"},{"","dip"},{"","eat"},{"","drop"},{"","exit"}}
 	
+	pal(6,0)
+	
 	function gm.mapdraw()
-		mapdraw(0,0,0,0,16,16) --the test map
+		mapdraw(0,0,0,0,16,16)
 	end
 	
 	function gm.draw()
@@ -40,7 +40,6 @@ function _init()
 			if p.inv[i][2] == "" then print("none",108,1+(i*8),1) else print(p.inv[i][2],108,1+(i*8),13) end
 		end
 		gm.edraw()
-		
 		if gm.showmenu == true then
 			gm.menu()
 		end
@@ -54,12 +53,15 @@ function _init()
 		end
 	end
 	
-	function gm.sleep(seconds)
-		for i=1,seconds*30 do flip() end
-	end
+	function gm.sleep(seconds) for i=1,seconds*30 do flip() end	end
 	
 	function gm.debugdraw()
-		--hi
+		if btn(0) then rectfill(108,108,112,112,7) else rect(108,108,112,112,5) end
+		if btn(1) then rectfill(120,108,124,112,7) else rect(120,108,124,112,5) end
+		if btn(2) then rectfill(114,102,118,106,7) else rect(114,102,118,106,5) end
+		if btn(3) then rectfill(114,108,118,112,7) else rect(114,108,118,112,5) end
+		if btn(4) then rectfill(108,114,112,118,7) else rect(108,114,112,118,5) end
+		if btn(5) then rectfill(114,114,118,118,7) else rect(114,114,118,118,5) end
 	end
 	
 	function gm.edraw()
@@ -110,10 +112,6 @@ function _init()
 				ent[5] += etoy*8
 			end
 		end
-	end
-	
-	function gm.next()
-		--go to next room
 	end
 	
 	function gm.menu()
@@ -203,14 +201,11 @@ function _init()
 						ent[5] = p.y+(y*2)
 						p.x += x
 						p.y += y
-						add(gm.log,"you move the "..ent[2])
+						add(gm.log,"you move the "..ent[2]..".")
 					end
 				end
-				if ent[2] == "slime" then
-					add(gm.log,"you hit the "..ent[2])
-				end
-				if ent[2] == "rat" then
-					add(gm.log,"you hit the "..ent[2])
+				if ent[2] == "slime" or ent[2] == "rat" then
+					add(gm.log,"you hit the "..ent[2]..".")
 				end
 				p.steps += 1
 				p.image = img+(p.steps%2)
@@ -271,56 +266,6 @@ function _draw()
 	gm.draw()
 	gm.debugdraw()
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 __gfx__
