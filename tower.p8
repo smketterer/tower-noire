@@ -3,59 +3,137 @@ version 4
 __lua__
 
 function _init()
-	gm = {}
-	gm.log = {"","welcome to tower noire."}
-	gm.e = {{0,"slime",32,32,64},{0,"block",34,72,64},{0,"fire",31,8,8},{0,"rat",33,48,80}}
-	gm.crs = ">"
-	gm.showmenu = false
-	gm.prompted = false
+	log = {{0,"welcome to tower noire."},{0,"a game by sheldon ketterer."}}
+	entities = {{0,"block",34,72,64},{0,"fire",31,8,8},{0,"slime",32,32,64,12},{0,"rat",33,48,80,8},{0,"rat",33,48,88,8},{0,"slime",32,24,64,12}}
+	cursor = ">"
+	show_menu = false
+	show_prompt = false
 	
-	p = {}
-	p.can = true
-	p.hp = 16
-	p.maxhp = 16
-	p.x = 16
-	p.y = 8
-	p.steps = 0
-	p.sprites = {0}
-	p.image = 0
-	p.inv = {{"hand","",45},{"body","tunic",44},{"legs","",46},{"pocket1","",62},{"pocket2","",62},{"pocket3","",62}}
-	p.act = {{gm.crs,"wear"},{"","throw"},{"","dip"},{"","eat"},{"","drop"},{"","exit"}}
+	player_can_move = true
+	player_health = 16
+	player_max_health = 16
+	player_x = 16
+	player_y = 8
+	player_steps = 0
+	player_image = 0
+	player_inventory = {{"hand","",45},{"body","tunic",44},{"legs","",46},{"pocket1","",62},{"pocket2","",62},{"pocket3","",62}}
+	player_actions = {{cursor,"wear"},{"","throw"},{"","dip"},{"","eat"},{"","drop"},{"","exit"}}
 	
 	pal(6,0)
 	
-	function gm.mapdraw()
+	function new_input()
+		local list_of_input = {btnp(0),btnp(1),btnp(2),btnp(3),btnp(4),btnp(5)}
+		return list_of_input
+	end
+	
+	function map_draw()
 		mapdraw(0,0,0,0,16,16)
 	end
 	
-	function gm.draw()
-		print(gm.log[count(gm.log)-1],4,115,1)
-		print(gm.log[count(gm.log)-1],4,114,5)
-		print(gm.log[count(gm.log)],4,123,1)
-		print(gm.log[count(gm.log)],4,122,13)
+	function game_draw()
+		print(log[count(log)-1][2],4,115,1)
+		print(log[count(log)-1][2],4,114,5)
+		print(log[count(log)][2],4,123,1)
+		print(log[count(log)][2],4,122,13)
 		spr(63,98,0)
-		print(p.hp .. "/" .. p.maxhp,108,1,7)
+		print(player_health .. "/" .. player_max_health,108,1,7)
 		for i=1,6 do
-			spr(p.inv[i][3],98,(i*8))
-			if p.inv[i][2] == "" then print("none",108,1+(i*8),1) else print(p.inv[i][2],108,1+(i*8),13) end
+			spr(player_inventory[i][3],98,(i*8))
+			if player_inventory[i][2] == "" then print("none",108,1+(i*8),1) else print(player_inventory[i][2],108,1+(i*8),13) end
 		end
-		gm.edraw()
-		if gm.showmenu == true then
-			gm.menu()
-		end
-		if gm.prompted == true then
-			gm.prompt()
-		end
+		entity_draw()
 		
-		if btnp(4) then
-			gm.showmenu = true
-			--gm.prompted = true
+		if show_menu then
+			menu()
+		end
+		if show_prompt then
+			prompt()
+		end
+		if input[5] and not show_prompt then
+			show_menu = true
 		end
 	end
 	
-	function gm.sleep(seconds) for i=1,seconds*30 do flip() end	end
+		function menu()
+		if menu_selection == nil then
+			menu_selection = 0
+		end
+		if btnp(2) then
+			if menu_selection == 0 then menu_selection = 5 else menu_selection -= 1 end
+		end
+		if btnp(3) then
+			if menu_selection == 5 then menu_selection = 0 else menu_selection += 1 end
+		end
+		if input[5] then
+			input[5] = false
+			show_menu = false
+			show_prompt = true
+		end
+		if btnp(5) then
+			show_menu = false
+			show_prompt = false
+		end
+		rect(98,7+(8*menu_selection),127,15+(8*menu_selection),7)
+	end
 	
-	function gm.debugdraw()
+	function prompt()
+		rect(16,32,111,79,13)
+		rectfill(17,33,110,78,0)
+		line(16,80,111,80,1)
+		print("what would you like",24,40,7)
+		print("to do with that?",24,48,7)
+		for i=1,6 do
+			if i <= 3 then
+				print(player_actions[i][1]..player_actions[i][2],(24+(i-1)*28),58,7)
+			else
+				print(player_actions[i][1]..player_actions[i][2],(24+(i-4)*28),66,7)
+			end
+		end
+		if btnp(0) then
+			for i=1,6 do
+				if player_actions[i][1] == cursor then
+					player_actions[i][1] = ""
+					if i==1 then
+						player_actions[6][1] = cursor
+						break
+					else
+						player_actions[i-1][1] = cursor
+						break
+					end
+				end
+			end		
+		end
+		if btnp(1) then
+			for i=1,6 do
+				if player_actions[i][1] == cursor then
+					player_actions[i][1] = ""
+					if i==6 then
+						player_actions[1][1] = cursor
+						break
+					else
+						player_actions[i+1][1] = cursor
+						break
+					end
+				end
+			end	
+		end
+		if input[5] then
+			for i=1,6 do
+				if player_actions[i][1] == cursor then
+					if i == 6 then
+						show_prompt = false
+					end
+					--fill in the rest of the behaviours here
+				end
+			end
+		end
+		if btnp(5) then
+			show_menu = true
+			show_prompt = false
+		end
+	end
+	
+	function debug_draw()
 		if btn(0) then rectfill(108,108,112,112,7) else rect(108,108,112,112,5) end
 		if btn(1) then rectfill(120,108,124,112,7) else rect(120,108,124,112,5) end
 		if btn(2) then rectfill(114,102,118,106,7) else rect(114,102,118,106,5) end
@@ -64,15 +142,29 @@ function _init()
 		if btn(5) then rectfill(114,114,118,118,7) else rect(114,114,118,118,5) end
 	end
 	
-	function gm.edraw()
-		for ent in all(gm.e) do
-			spr(ent[3]+((p.steps % 2)*16), ent[4], ent[5])
+	function entity_there(x_check,y_check)
+		result = false
+		for i=1,count(entities) do
+			if entities[i][4] == x_check and entities[i][5] == y_check then
+				result = true
+			else
+				if player_x == x_check and player_y == y_check then
+					result = true
+				end
+			end
+		end
+		return result
+	end
+	
+	function entity_draw()
+		for e in all(entities) do
+			spr(e[3]+((player_steps % 2)*16), e[4], e[5])
 		end
 	end
 	
-	function gm.eupdate()
-		for ent in all(gm.e) do
-			if ent[2] == "slime" then
+	function entity_update()
+		for e in all(entities) do
+			if e[2] == "slime" then
 				roll = rnd(2)-1
 				if roll >= 0.67 then
 					etox = (sgn(rnd(2)-1)*8)/8
@@ -87,7 +179,7 @@ function _init()
 					end
 				end
 			end
-			if ent[2] == "rat" then
+			if e[2] == "rat" then
 				roll = rnd(2)-1
 				if roll >= 0.2 then
 					etox = (sgn(rnd(2)-1)*8)/8
@@ -102,169 +194,122 @@ function _init()
 					end
 				end
 			end
-			if ent[2] == "block" or ent[2] == "fire" then
+			if e[2] == "block" or e[2] == "fire" then
 				etox = 0
 				etoy = 0
 			end
-			to = mget((ent[4]/8)+etox,(ent[5]/8)+etoy)
+			
+			to = mget((e[4]/8)+etox,(e[5]/8)+etoy)
 			if to != 60 and to != 61 and to != 65 then
-				ent[4] += etox*8
-				ent[5] += etoy*8
-			end
-		end
-	end
-	
-	function gm.menu()
-		if menu_selection == nil then
-			menu_selection = 0
-		end
-		if btnp(2) then
-			if menu_selection == 0 then menu_selection = 5 else menu_selection -= 1 end
-		end
-		if btnp(3) then
-			if menu_selection == 5 then menu_selection = 0 else menu_selection += 1 end
-		end
-		if btnp(4) then
-			gm.showmenu = false
-			gm.prompted = true
-		end
-		if btnp(5) then
-		end
-		rect(98,7+(8*menu_selection),127,15+(8*menu_selection),7)
-	end
-	
-	function gm.prompt()
-		rect(16,32,111,79,13)
-		rectfill(17,33,110,78,0)
-		line(16,80,111,80,1)
-		print("what would you like",24,40,7)
-		print("to do with that?",24,48,7)
-		for i=1,6 do
-			if i <= 3 then
-				print(p.act[i][1]..p.act[i][2],(24+(i-1)*28),58,7)
-			else
-				print(p.act[i][1]..p.act[i][2],(24+(i-4)*28),66,7)
-			end
-		end
-		if btnp(0) then
-			for i=1,6 do
-				if p.act[i][1] == gm.crs then
-					p.act[i][1] = ""
-					if i==1 then
-						p.act[6][1] = gm.crs
-						break
-					else
-						p.act[i-1][1] = gm.crs
-						break
-					end
-				end
-			end		
-		end
-		if btnp(1) then
-			for i=1,6 do
-				if p.act[i][1] == gm.crs then
-					p.act[i][1] = ""
-					if i==6 then
-						p.act[1][1] = gm.crs
-						break
-					else
-						p.act[i+1][1] = gm.crs
-						break
-					end
-				end
-			end	
-		end
-		if btnp(4) then
-			for i=1,6 do
-				if p.act[i][1] == gm.crs then
-					if i == 6 then
-						gm.prompted = false
-					end
-					--fill in the rest of the behaviours here
+				if not entity_there(e[4]+etox*8,e[5]+etoy*8) then
+					e[4] += etox*8
+					e[5] += etoy*8
 				end
 			end
-		end	
+		end
 	end
 	
-	function p.update()
-		p.move()
-		p.draw()
+	function player_update()
+		player_move()
+		player_draw()
 	end
 	
-	function p.step(x,y,img)
-		for ent in all(gm.e) do
-			if ent[4] == p.x+x and ent[5] == p.y+y then
-				if ent[2] == "block" then
-					to = mget((p.x+(x*2))/8,(p.y+(y*2))/8)
+	function player_attack(e)
+		add(log,{player_steps,"you swing at the "..e[2].."..."})
+		local roll = flr(rnd(7))
+		if roll == 0 then
+			add(log,{player_steps,"...but you miss!"})
+		else
+			add(log,{player_steps,"you hit for "..roll.." damage!"})
+		end
+		e[6] -= roll
+		if e[6] < 0 then
+			entity_die(e)
+		end
+		player_step(0,0)
+	end
+	
+	function player_step(x,y,img)
+		for e in all(entities) do
+			if e[4] == player_x+x and e[5] == player_y+y then
+				if e[2] == "block" then
+					to = mget((player_x+(x*2))/8,(player_y+(y*2))/8)
 					if to != 60 and to != 61 and to != 65 then
-						ent[4] = p.x+(x*2)
-						ent[5] = p.y+(y*2)
-						p.x += x
-						p.y += y
-						add(gm.log,"you move the "..ent[2]..".")
+						if not entity_there(player_x+(x*2),player_y+(y*2)) then
+							e[4] = player_x+(x*2)
+							e[5] = player_y+(y*2)
+							player_x += x
+							player_y += y
+							add(log,{player_steps,"you move the "..e[2].."."})
+						else
+							return
+						end
+					else
+						return
 					end
 				end
-				if ent[2] == "slime" or ent[2] == "rat" then
-					add(gm.log,"you hit the "..ent[2]..".")
+				if e[2] == "slime" or e[2] == "rat" then
+					player_attack(e)
 				end
-				p.steps += 1
-				p.image = img+(p.steps%2)
+				player_steps += 1
+				player_image = img+(player_steps%2)
 				sfx(0)
-				return true
+				return
 			end
 		end
 		
-		to = mget((p.x+x)/8,(p.y+y)/8)
+		to = mget((player_x+x)/8,(player_y+y)/8)
 		if to != 60 and to != 61 and to != 65 then
-			p.x += x
-			p.y += y
-			p.steps += 1
+			player_x += x
+			player_y += y
+			player_steps += 1
 			if img != nil then
-				p.image = img+(p.steps%2)
+				player_image = img+(player_steps%2)
 			end
 			if x != 0 or y != 0 then
-				sfx(1+(p.steps%2))
+				sfx(1+(player_steps%2))
 			end
-			gm.eupdate()
+			entity_update()
 		end
 	end
 	
-	function p.move()
-		if gm.showmenu == true or gm.prompted == true then p.can = false else p.can = true end
-		if p.can == true then
+	function player_move()
+		if show_menu or show_prompt then player_can_move = false else player_can_move = true end
+		if player_can_move then
 			if btnp(0) then
-				p.step(-8,0,0)
+				player_step(-8,0,0)
 			end
 			if btnp(1) then
-				p.step(8,0,2)
+				player_step(8,0,2)
 			end
 			if btnp(2) then
-				p.step(0,-8,4)
+				player_step(0,-8,4)
 			end
 			if btnp(3) then
-				p.step(0,8,6)
+				player_step(0,8,6)
 			end
 			if btnp(5) then
-				p.step(0,0)
+				player_step(0,0)
+				add(log,{player_steps,"you wait..."})
 			end
 		end
 	end
 	
-	function p.draw()
-		spr(p.image,p.x,p.y)
+	function player_draw()
+		spr(player_image,player_x,player_y)
 	end	
 end
 
 function _update()
-	--hi
 end
 
 function _draw()
 	cls()
-	gm.mapdraw()
-	p.update()
-	gm.draw()
-	gm.debugdraw()
+	input = new_input()
+	map_draw()
+	player_update()
+	game_draw()
+	debug_draw()
 end
 
 
