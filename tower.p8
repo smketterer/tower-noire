@@ -77,7 +77,7 @@ function _init()
 	end
 	
 	function prompt()
-		rect(16,32,111,79,13)
+		rect(16,32,111,79,7)
 		rectfill(17,33,110,78,0)
 		line(16,80,111,80,1)
 		print("what would you like",24,40,7)
@@ -304,8 +304,8 @@ function _update()
 end
 
 function _draw()
-	cls()
 	input = new_input()
+	cls()
 	map_draw()
 	player_update()
 	game_draw()
