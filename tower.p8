@@ -272,6 +272,7 @@ function _init()
 		add(log,{player_steps,"the "..source.." does "..roll.." damage!"})
 		player_health -= roll
 		if player_health <= 0 then
+			player_health = 0
 			player_die()
 		end
 	end
