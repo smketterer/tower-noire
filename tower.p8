@@ -6,14 +6,14 @@ __lua__
 
 function _init()
 	log = {{0,"welcome to tower noire."},{0,"a game by cow."}}
-	entities = {{0,"block",34,72,64},{0,"block",34,296,96},{0,"fire",31,8,8},{0,"fire",31,328,88},{1,"slime",32,64,80,12},{1,"rat",33,24,88,8},{1,"rat",33,136,40,8},{1,"rat",33,160,40,8},{1,"rat",33,200,40,8},{1,"slime",32,136,56,8},{3,"snack",99,16,80}}
+	entities = {{0,"block",34,72,64},{0,"block",34,296,96},{0,"fire",31,8,8},{0,"fire",31,328,88},{1,"slime",32,64,80,12},{1,"rat",33,24,88,8},{1,"rat",33,136,40,8},{1,"rat",33,160,40,8},{1,"rat",33,200,40,8},{1,"slime",32,136,56,8},{3,"snack",99,16,24}}
 	cursor = ">"
 	show_menu = false
 	show_prompt = false
 	camera_x = 0
 	camera_y = 0
 	room = 1
-	
+
 	player_can_move = true
 	player_is_visible = true
 	player_health = 9
@@ -24,22 +24,22 @@ function _init()
 	player_image = 0
 	player_inventory = {{"hand","",45},{"body","",44},{"legs","",46},{"pocket","",62},{"pocket","",62},{"pocket","",62}}
 	player_actions = {{cursor,"wear"},{"","throw"},{"","dip"},{"","eat"},{"","drop"},{"","exit"}}
-	
+
 	player_effects = {}
 	wearable = {}
 	breakable = {}
 	dippable = {}
 	edible = {{"snack",6,"",0}} --name, heal amount, other effect, probability of effect
-	
+
 	function new_input()
 		local list_of_input = {btnp(0),btnp(1),btnp(2),btnp(3),btnp(4),btnp(5)}
 		return list_of_input
 	end
-	
+
 	function map_draw()
 		mapdraw(0,0,0,0,128,148)
 	end
-	
+
 	function change_room(relative)
 		dpal={0,1,1, 2,1,13,13, 4,4,9,3, 13,1,13,14}
 		for i=0,40 do
@@ -57,7 +57,7 @@ function _init()
 		player_x += (16*8)*relative
 		camera_x += (16*8)*relative
 	end
-	
+
 	function game_draw()
 		print(log[count(log)-1][2],camera_x+4,camera_y+115,1)
 		print(log[count(log)-1][2],camera_x+4,camera_y+114,5)
@@ -83,7 +83,7 @@ function _init()
 			show_menu = true
 		end
 	end
-	
+
 	function menu()
 		if menu_selection == nil then
 			menu_selection = 0
@@ -107,7 +107,7 @@ function _init()
 		end
 		rect(camera_x+98,camera_y+7+(8*menu_selection),camera_x+127,camera_y+15+(8*menu_selection),7)
 	end
-	
+
 	function prompt()
 		rect(camera_x+16,camera_y+32,camera_x+111,camera_y+79,13)
 		rectfill(camera_x+17,camera_y+33,camera_x+110,camera_y+78,0)
@@ -133,7 +133,7 @@ function _init()
 						break
 					end
 				end
-			end		
+			end
 		end
 		if btnp(1) then
 			for i=1,6 do
@@ -147,7 +147,7 @@ function _init()
 						break
 					end
 				end
-			end	
+			end
 		end
 		if input[5] then
 			for i=1,6 do
@@ -157,7 +157,7 @@ function _init()
 						show_prompt = false
 					end
 					if i == 2 then
-						throw_selected_item(8,0)
+						throw_selected_item()
 						show_prompt = false
 					end
 					if i == 3 then
@@ -173,6 +173,7 @@ function _init()
 						show_prompt = false
 					end
 					if i == 6 then
+						show_menu = false
 						show_prompt = false
 					end
 				end
@@ -201,7 +202,7 @@ function _init()
 		end
 		return result
 	end
-	
+
 	function item_there(x_check,y_check)
 		for i=1,count(entities) do
 			if entities[i][4] == x_check and entities[i][5] == y_check and entities[i][1] == 3 then
@@ -210,7 +211,7 @@ function _init()
 		end
 		return false
 	end
-	
+
 	function stash_item(item)
 		for i=4,6 do
 			if player_inventory[i][2] == "" then
@@ -223,16 +224,57 @@ function _init()
 		end
 		add(log,{player_steps,"no room in your pockets."})
 	end
-	
+
 	function wear_selected_item()
 	end
-	
+
 	function throw_selected_item()
+		local distance = -flr(-rnd(3)) + 1
+		local direction = flr(player_image/2) -- 0 = left, 1 = right, 2 = up, 3 = down
+		add(log,{player_steps,"you throw the "..player_inventory[menu_selection+1][2].."."})
+		for d=1,distance do
+			-- get player direction
+			direction = flr(player_image/2) -- 0 = left, 1 = right, 2 = up, 3 = down
+			if direction <= 1 then
+				to = mget(player_x/8 + d*sgn(direction-1), player_y/8)
+			else
+				to = mget(player_x/8, player_y/8 + d*sgn(direction-3))
+			end
+			-- TODO: if contains entity then react to that entity
+			-- TODO: throwing animation. pause and add entity per step.
+			-- if contains a wall, bounce off or break
+			if contains_impassible_tiles(to,true) then
+				add(log,{player_steps,"the "..player_inventory[menu_selection+1][2].." bounces and falls."})
+				distance = d-1
+				break
+			end
+		end
+		if direction <= 1 then
+			add(entities,{
+				3,
+				player_inventory[menu_selection+1][2],
+				99,
+				player_x+(distance*8)*sgn(direction-1),
+				player_y}
+			)
+		else
+			add(entities,{
+				3,
+				player_inventory[menu_selection+1][2],
+				99,
+				player_x,
+				player_y+(distance*8)*sgn(direction-3)}
+			)
+		end
+		player_inventory[menu_selection+1][2] = ""
+		if menu_selection > 2 then
+			player_inventory[menu_selection+1][3] = 62
+		end
 	end
-	
+
 	function dip_selected_item()
 	end
-	
+
 	function eat_selected_item()
 		local can_eat = false
 		for i=1,count(edible) do
@@ -241,7 +283,7 @@ function _init()
 				-- eat the cake, anime
 				player_heal(edible[i][1],6)
 				-- add other effects here
-				
+
 				-- remove the item from inventory
 				player_inventory[menu_selection+1][2] = ""
 				if menu_selection > 2 then
@@ -249,12 +291,12 @@ function _init()
 				end
 			end
 		end
-	
+
 		if can_eat == false then
 			add(log,{player_steps,"eating this would be difficult."})
 		end
 	end
-	
+
 	function drop_selected_item()
 		if item_there(player_x,player_y) then
 			add(log,{player_steps,"no room on the ground."})
@@ -272,7 +314,7 @@ function _init()
 			player_inventory[menu_selection+1][3] = 62
 		end
 	end
-	
+
 	function entity_draw()
 		for e in all(entities) do
 			if e[1] == 2 or e[1] == 3 then
@@ -284,7 +326,7 @@ function _init()
 			end
 		end
 	end
-	
+
 	function entity_update()
 		for e in all(entities) do
 			if e[2] == "slime" then
@@ -317,8 +359,8 @@ function _init()
 					end
 				end
 			end
-			
-			if e[1] == 1 then			
+
+			if e[1] == 1 then
 				to = mget((e[4]/8)+etox,(e[5]/8)+etoy)
 				if contains_impassible_tiles(to,true)==false then
 					if not entity_there(e[4]+etox*8,e[5]+etoy*8) then
@@ -338,18 +380,18 @@ function _init()
 			end
 		end
 	end
-	
+
 	function entity_die(e)
 		add(log,{player_steps,"the "..e[2].." dies."})
 		e[1] = 2
 		e[3] = 70+flr(rnd(4))
 	end
-	
+
 	function player_update()
 		player_move()
 		player_draw()
 	end
-	
+
 	function player_attack(e,dice)
 		add(log,{player_steps,"you swing at the "..e[2].."..."})
 		local roll = flr(rnd(dice+1))
@@ -363,7 +405,7 @@ function _init()
 			entity_die(e)
 		end
 	end
-	
+
 	function player_take_damage(source,dice)
 		local roll = flr(rnd(dice+1))
 		add(log,{player_steps,"the "..source.." does "..roll.." damage!"})
@@ -373,7 +415,7 @@ function _init()
 			player_die()
 		end
 	end
-	
+
 	function player_heal(source,dice)
 		local roll = flr(1+rnd(dice))
 		add(log,{player_steps,"the "..source.." heals "..roll.."hp!"})
@@ -382,7 +424,7 @@ function _init()
 			player_health = player_max_health
 		end
 	end
-	
+
 	function screen_shake(radius,length)
 		local old_camera_x = camera_x
 		local old_camera_y = camera_y
@@ -400,7 +442,7 @@ function _init()
 			camera_y = old_camera_y
 		end
 	end
-	
+
 	function player_die()
 		sfx(0)
 		for i=0,60 do
@@ -411,11 +453,11 @@ function _init()
 			spr(16,player_x,player_y)
 			camera(camera_x,camera_y)
 			flip()
-		end		
+		end
 		change_room(0)
 		run()
 	end
-	
+
 	function contains_impassible_tiles(to,for_enemies)
 		local impassible = false
 		local tiles = {}
@@ -429,7 +471,7 @@ function _init()
 		end
 		return impassible
 	end
-	
+
 	function player_fall()
 		for i=0,30 do
 			cls()
@@ -446,7 +488,7 @@ function _init()
 		player_take_damage("fall",6)
 		sfx(0)
 	end
-	
+
 	function player_step(x,y,img)
 		for e in all(entities) do
 			-- for items
@@ -487,7 +529,7 @@ function _init()
 				return
 			end
 		end
-		
+
 		to = mget((player_x+x)/8,(player_y+y)/8)
 		if contains_impassible_tiles(to) == false then
 			if to == 42 then
@@ -520,7 +562,7 @@ function _init()
 			entity_update()
 		end
 	end
-	
+
 	function player_move()
 		if show_menu or show_prompt then player_can_move = false else player_can_move = true end
 		if player_can_move then
@@ -531,7 +573,7 @@ function _init()
 				player_step(8,0,2)
 			end
 			if btnp(2) then
-				player_step(0,-8,4) 
+				player_step(0,-8,4)
 			end
 			if btnp(3) then
 				player_step(0,8,6)
@@ -547,12 +589,12 @@ function _init()
 			end
 		end
 	end
-	
+
 	function player_draw()
 		if player_is_visible then
 			spr(player_image,player_x,player_y)
 		end
-	end	
+	end
 end
 
 function _update()
@@ -887,4 +929,3 @@ __music__
 00 41424344
 00 41424344
 00 41424344
-
