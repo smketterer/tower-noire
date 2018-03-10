@@ -1,12 +1,13 @@
 # Tower Noire
-A turn-based RPG for the PICO-8, written in Lua, and inspired by Cave Noire, Little Nemo, Powder and Star Ocean: Blue Sphere.
+A PICO-8 roguelike inspired by Cave Noire, Little Nemo, Powder and Star Ocean: Blue Sphere.
 
 ## Controls
 * Z to open the item and action menus and confirm actions
 * X to wait and cancel menu actions
 * Arrow keys to move, attack and control menus
+* Gamepads are also supported.
 
 ## Get It
-You can get the cartridge by saving the image below and running it in PICO-8.
+If you want binaries or more information, you can get them here:
 
-![Cartridge](tower.p8.png?raw=true)
+https://cow.itch.io/tower-noire
